@@ -1,0 +1,1176 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2511
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 //imported from code.org \'97>\
+\
+/*\
+By: Kora S. Hughes --> made @ Horace Mann School (Feb. 22nd to April 25th)\
+\
+  the purpose of this project is to create a functional chess game that can redraw itself to create cool looking visuals\
+  the game takes user input of a chess move in board notation and plays the game using that\
+  future ideas; adding an AI for 1 player, adding different move-sets, adding more complex looking pieces\
+*/\
+\
+//variables & general info...\
+var tileSize = 35;\
+var numSquares = 8;\
+var boardSize = tileSize*numSquares;\
+var startX = 20;\
+var startY = 15;\
+var grey = "#7B7B7B"; //personal prefrence\
+var whiteColor = "#e97b94"; //for checker look\
+var blackColor = "#83152d";\
+var normColor = "#bc1a3f";\
+var defaultSpd = 93; //turtle speed mod\
+\
+var board = [\
+  ["br","bn","bb","bq","bk","bb","bn","br"],\
+  ["bp","bp","bp","bp","bp","bp","bp","bp"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["wp","wp","wp","wp","wp","wp","wp","wp"],\
+  ["wr","wn","wb","wq","wk","wb","wn","wr"]\
+  ];\
+//8x8 array board[x][y] = first letter is the color of the piece b(black)/ w(white)/ x(nothing)\
+//and second letter is the type p(pawn)/ n(knight)/ b(bishop)/ r(rook)/ q(queen)/ k(king)/ x(nothing)\
+var defaultBoard = [\
+  ["br","bn","bb","bq","bk","bb","bn","br"],\
+  ["bp","bp","bp","bp","bp","bp","bp","bp"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["wp","wp","wp","wp","wp","wp","wp","wp"],\
+  ["wr","wn","wb","wq","wk","wb","wn","wr"]\
+  ];\
+var testBoard = [\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","wp","bp","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["xx","xx","xx","xx","xx","xx","xx","xx"],\
+  ["wr","xx","xx","xx","xx","xx","xx","xx"]\
+  ];  \
+  \
+var posBoard = [ // posBoard[y][x][0/1=x/y]  =  representation for position refrencing (left to right, top to bottom)\
+  [[38,36], [73,36], [108,36], [143,36], [178,36], [213,36], [248,36], [283,36]],\
+  [[38,71], [73,71], [108,71], [143,71], [178,71], [213,71], [248,71], [283,71]],\
+  [[38,106],[73,106],[108,106],[143,106],[178,106],[213,106],[248,106],[283,106]],\
+  [[38,141],[73,141],[108,141],[143,141],[178,141],[213,141],[248,141],[283,141]],\
+  [[38,176],[73,176],[108,176],[143,176],[178,176],[213,176],[248,176],[283,176]],\
+  [[38,211],[73,211],[108,211],[143,211],[178,211],[213,211],[248,211],[283,211]],\
+  [[38,246],[73,246],[108,246],[143,246],[178,246],[213,246],[248,246],[283,246]],\
+  [[38,281],[73,281],[108,281],[143,281],[178,281],[213,281],[248,281],[283,281]]\
+  ];\
+var convertBoard = [ //board notation conversion piece\
+  ["a8","b8","c8","d8","e8","f8","g8","h8"],\
+  ["a7","b7","c7","d7","e7","f7","g7","h7"],\
+  ["a6","b6","c6","d6","e6","f6","g6","h6"],\
+  ["a5","b5","c5","d5","e5","f5","g5","h5"],\
+  ["a4","b4","c4","d4","e4","f4","g4","h4"],\
+  ["a3","b3","c3","d3","e3","f3","g3","h3"],\
+  ["a2","b2","c2","d2","e2","f2","g2","h2"],\
+  ["a1","b1","c1","d1","e1","f1","g1","h1"]\
+  ];\
+\
+//basic functions... (all of which qualify as abstractions)\
+function updateBoard() \{ //show the current board result (like a print array kind of thing)\
+  drawCheckers(); //clearing tool\
+\
+  speed(100);\
+  for(var y = 7; y >= 0; y--)\{\
+    for(var x = 7; x >= 0; x--)\{\
+      penUp();\
+      // console.log("Board: " + board[y][x])\
+      //color\
+      var color = board[y][x].substring(0,1); //remember: 1 is exclusive\
+      checkColor(color);\
+      \
+      //piece\
+      moveTo(posBoard[y][x][0],posBoard[y][x][1]);\
+      var piece = board[y][x].substring(1);\
+      if(piece === "p")\{\
+        drawPawn();\
+      \}\
+      else if(piece === "r")\{\
+        drawRook();\
+      \}\
+      else if(piece === "n")\{\
+        drawKnight();\
+      \}\
+      else if(piece === "b")\{\
+        drawBishop();\
+      \}\
+      else if(piece === "q")\{\
+        drawQueen();\
+      \}\
+      else if(piece === "k")\{\
+        drawKing();\
+      \}\
+      else if(piece === "x")\{\
+        //no piece\
+      \}\
+      else\{\
+        console.log("Error on piece: " + piece);\
+        setText("error_log", "Error: incorrect piece type");\
+      \}\
+    \}\
+  \}\
+  speed(defaultSpd);\
+\}\
+\
+function makeMove(move)\{//** makes a move to the updated board which will be output below given it can move (returns whether or not updated board is valid)\
+/*\
+to move:\
+I took the spot where the user claimed a piece was moving towards, \
+checked all the places said type of piece could have gotten there, \
+and use that reference to make the move on the array board provided it breaks no rules, \
+which is then output to the visual board. \
+*/\
+  var updateBoard = board;\
+  var colorPiece = move.substring(0,1);\
+  var typePiece = move.substring(1,2);\
+  var placeX = convertLetNum(move.substring(2,3)); //helpers but more concise in an array\
+  var placeY = convertNum(move.substring(3,4));\
+  var place =[8-placeY, placeX-1]; //y,x for consistency with the board (inverse y,x)\
+  \
+  console.log("Input: " + colorPiece + ", " + typePiece + ", " + move + ", [" + place[0] + ", " + place[1] + "]");\
+  \
+  if(place[0] > 7 || place[0] < 0 || place[1] > 7 || place[0] < 0)\{ //error check\
+    console.log("Error on input move: " + place[0] + ", " + place[1] + " is out of bounds.");\
+    setText("error_log", "Error: piece out of bounds");\
+    canUpdate = false;\
+  \}\
+  else if (updateBoard[place[0]][place[1]] === "xx" || updateBoard[place[0]][place[1]].substring(0,1) != colorPiece) \{\
+    if(typePiece === "p")\{ //PAWN**\
+      //check color\
+      var colorMult = 1;\
+      if(colorPiece === "b")\{\
+        colorMult = -1;\
+      \}\
+      if(updateBoard[place[0]][place[1]] === "xx")\{\
+        if(updateBoard[place[0]+colorMult][place[1]].substring(0,2) === (colorPiece+typePiece))\{\
+          // var color = updateBoard[place[0]+1][place[1]].substring(0,1); //checking for color\
+          if(place[0] === 7 || place[0] === 0)\{ //promotion\
+            if(move.length <= 4) \{\
+              console.log("prompotion move not valid");\
+              setText("error_log", "Error: no piece to promote to.");\
+              canUpdate = false;\
+            \}\
+            else\{\
+              var pieceChange = move.substring(4,5);\
+              updateBoard[place[0]+colorMult][place[1]] = "xx";\
+              updateBoard[place[0]][place[1]] = colorPiece + pieceChange;\
+              board = updateBoard;//write\
+              canUpdate = true;\
+            \}\
+          \}\
+          else\{\
+            updateBoard[place[0]+colorMult][place[1]] = "xx";\
+            updateBoard[place[0]][place[1]] = colorPiece + typePiece;\
+            board = updateBoard;//write\
+            canUpdate = true;\
+          \}\
+        \}\
+        else if(updateBoard[place[0]+(2*colorMult)][place[1]].substring(0,2) === (colorPiece+typePiece) &&\
+                ((place[0]+(2*colorMult) === 1 || place[0]+(2*colorMult) === 6)) &&\
+                updateBoard[place[0]+colorMult][place[1]].substring(0,2) === "xx")\{ //for the initial 2 space pawn move\
+          updateBoard[place[0]+(2*colorMult)][place[1]] = "xx";\
+          updateBoard[place[0]][place[1]] = colorPiece + typePiece;\
+          board = updateBoard;//write\
+          canUpdate = true;\
+        \}\
+        else\{\
+          console.log("Error on input move: " + place[0] + ", " + place[1] + " is an invalid move.");\
+          setText("error_log", "Error: invalid move");\
+          canUpdate = false;\
+        \}\
+      \}\
+      else if(updateBoard[place[0]][place[1]].substring(0,1) != colorPiece)\{\
+        if(updateBoard[place[0]+colorMult][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{\
+          updateBoard[place[0]+colorMult][place[1]+1] = "xx";\
+          updateBoard[place[0]][place[1]] = colorPiece + typePiece;\
+          board = updateBoard;//write\
+          canUpdate = true;\
+        \}\
+        else if(updateBoard[place[0]+colorMult][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+          updateBoard[place[0]+colorMult][place[1]-1] = "xx";\
+          updateBoard[place[0]][place[1]] = colorPiece + typePiece;\
+          board = updateBoard;//write\
+          canUpdate = true;\
+        \}\
+        else\{\
+          console.log("Error on input move: " + place[0] + ", " + place[1] + " is an invalid move.");\
+          setText("error_log", "Error: invalid move");\
+          canUpdate = false;\
+        \}\
+      \}\
+      else\{\
+        console.log("Error on input move: " + place[0] + ", " + place[1] + " is an invalid move.");\
+        setText("error_log", "Error: invalid move");\
+        canUpdate = false;\
+      \}\
+      //UNPISAUNT\
+    \}\
+    else if(typePiece === "r")\{ //ROOK**\
+      var badRMove = true;\
+      for(var x = place[0]+1; x <= 7; x++)\{ //y check\
+        if(updateBoard[x][place[1]] != "xx")\{\
+          if(updateBoard[x][place[1]].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[x][place[1]] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badRMove = false;\
+          \}\
+          else\{ //break\
+            x=9;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[0]-1; x >= 0; x--)\{\
+        if(updateBoard[x][place[1]] != "xx")\{\
+          if(updateBoard[x][place[1]].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[x][place[1]] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badRMove = false;\
+          \}\
+          else\{ //break\
+            x=-1;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[place[0]][x] != "xx")\{\
+          if(updateBoard[place[0]][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[place[0]][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badRMove = false;\
+          \}\
+          else\{ //break\
+            x=9;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[1]-1; x >= 0; x--)\{\
+        if(updateBoard[place[0]][x] != "xx")\{\
+          if(updateBoard[place[0]][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[place[0]][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badRMove = false;\
+          \}\
+          else\{ //break\
+            x=-1;\
+          \}\
+        \}\
+      \}\
+      if(badRMove === true)\{\
+        console.log("Error rooks can not jump: " + move);\
+        setText("error_log", "Error: invalid move");\
+        canUpdate = false;\
+      \}\
+      else\{\
+        canUpdate = true;\
+      \}\
+    \}\
+    else if(typePiece === "n")\{  //************\
+      //2up (1left/right), 2left (1up/down), 2down(1left/right), 2right(1up/down)\
+      var badNMove = true;\
+      if(place[0]-2 >= 0)\{ //up\
+        if(place[1]+1 <= 7)\{\
+          if(updateBoard[place[0]-2][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]-2][place[1]+1] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[0]-2 >= 0)\{\
+        if(place[1]-1 >= 0)\{\
+          if(updateBoard[place[0]-2][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+            // console.log(updateBoard[place[0]][place[1]] + ", " + updateBoard[place[0]-2][place[1]-1]);\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]-2][place[1]-1] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[0]+2 <= 7)\{ //down\
+        if(place[1]+1 <= 7)\{\
+          if(updateBoard[place[0]+2][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]+2][place[1]+1] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[0]+2 <= 7)\{\
+        if(place[1]-1 >= 0)\{\
+          if(updateBoard[place[0]+2][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]+2][place[1]-1] = "xx";\
+            badNMove = false;\
+            console.log("knight has moved");\
+          \}\
+        \}\
+      \}\
+      if(place[1]-2 >= 0)\{ //left\
+        if(place[0]-1 >= 0)\{\
+          if(updateBoard[place[0]-1][place[1]-2].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]-1][place[1]-2] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[1]-2 >= 0)\{\
+        if(place[0]+1 <= 7)\{\
+          if(updateBoard[place[0]+1][place[1]-2].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]+1][place[1]-2] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[1]+2 <= 7)\{ //right\
+        if(place[0]-1 >= 0)\{\
+          if(updateBoard[place[0]-1][place[1]+2].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]-1][place[1]+2] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(place[1]+2 <= 7)\{\
+        if(place[0]+1 <= 7)\{\
+          if(updateBoard[place[0]+1][place[1]+2].substring(0,2) === (colorPiece+typePiece))\{\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            updateBoard[place[0]+1][place[1]+2] = "xx";\
+            badNMove = false;\
+          \}\
+        \}\
+      \}\
+      if(badNMove === true)\{\
+        console.log("Error on input move: " + place[0] + ", " + place[1] + " is an invalid move.");\
+        setText("error_log", "Error: invalid move");\
+        canUpdate = false;\
+      \}\
+      else\{\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+    \}\
+    else if(typePiece === "b")\{  //BISHOP**\
+      //check along diagonal for piece, if there is no piece continue, if there is a bishop of correct color move there, else error\
+      var badBMove = true;\
+      \
+      var y = place[0]-1;  // north east\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[y][x].substring(0,2) != "xx")\{\
+          if(updateBoard[y][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[y][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badBMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=9;\
+          \}\
+        \}\
+        y--;\
+        if(y < 0)\{\
+          x = 8;\
+        \}\
+      \}\
+      var z = place[0]+1;  // south west\
+      for(var x = place[1]-1; x >= 0; x--)\{ //x check\
+        if(updateBoard[z][x].substring(0,2) != "xx")\{\
+          if(updateBoard[z][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[z][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badBMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=-1;\
+          \}\
+        \}\
+        z++;\
+        if(z > 7)\{\
+          x = -1;\
+        \}\
+      \}\
+      var f = place[0]+1;  // south east\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[f][x].substring(0,2) != "xx")\{\
+          if(updateBoard[f][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[f][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badBMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=9;\
+          \}\
+        \}\
+        f++;\
+        if(f > 7)\{\
+          x = 8;\
+        \}\
+      \}\
+      var d = place[0]-1;  // north west\
+      for(var x = place[1]-1; x >= 0; x--)\{ //x check\
+        if(updateBoard[d][x].substring(0,2) != "xx")\{\
+          if(updateBoard[d][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[d][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badBMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=-1;\
+          \}\
+        \}\
+        d--;\
+        if(d < 0)\{\
+          x = -1;\
+        \}\
+      \}\
+      \
+      if(badBMove === true)\{\
+        console.log("Error bishops cannot jump: " + move);\
+        setText("error_log", "Error: invalid move");\
+        canUpdate = false;\
+      \}\
+      else\{\
+        canUpdate = true;\
+      \}\
+    \}\
+    else if(typePiece === "q")\{ //QUEEN**\
+      var badQMove = true;\
+      for(var x = place[0]+1; x <= 7; x++)\{ //y check\
+        if(updateBoard[x][place[1]] != "xx")\{\
+          if(updateBoard[x][place[1]].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[x][place[1]] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //break\
+            x=9;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[0]-1; x >= 0; x--)\{\
+        if(updateBoard[x][place[1]] != "xx")\{\
+          if(updateBoard[x][place[1]].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[x][place[1]] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //break\
+            x=-1;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[place[0]][x] != "xx")\{\
+          if(updateBoard[place[0]][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[place[0]][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //break\
+            x=9;\
+          \}\
+        \}\
+      \}\
+      for(var x = place[1]-1; x >= 0; x--)\{\
+        if(updateBoard[place[0]][x] != "xx")\{\
+          if(updateBoard[place[0]][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[place[0]][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //break\
+            x=-1;\
+          \}\
+        \}\
+      \}\
+      \
+      var y = place[0]-1;  // north east\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[y][x].substring(0,2) != "xx")\{\
+          if(updateBoard[y][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[y][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=9;\
+          \}\
+        \}\
+        y--;\
+        if(y < 0)\{\
+          x = 8;\
+        \}\
+      \}\
+      var z = place[0]+1;  // south west\
+      for(var x = place[1]-1; x >= 0; x--)\{ //x check\
+        if(updateBoard[z][x].substring(0,2) != "xx")\{\
+          if(updateBoard[z][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[z][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=-1;\
+          \}\
+        \}\
+        z++;\
+        if(z > 7)\{\
+          x = -1;\
+        \}\
+      \}\
+      var f = place[0]+1;  // south east\
+      for(var x = place[1]+1; x <= 7; x++)\{ //x check\
+        if(updateBoard[f][x].substring(0,2) != "xx")\{\
+          if(updateBoard[f][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[f][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=9;\
+          \}\
+        \}\
+        f++;\
+        if(f > 7)\{\
+          x = 8;\
+        \}\
+      \}\
+      var d = place[0]-1;  // north west\
+      for(var x = place[1]-1; x >= 0; x--)\{ //x check\
+        if(updateBoard[d][x].substring(0,2) != "xx")\{\
+          if(updateBoard[d][x].substring(0,2) === (colorPiece+typePiece))\{ //that location is where the\
+            updateBoard[d][x] = "xx";\
+            updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+            badQMove = false;\
+          \}\
+          else\{ //its not the piece thats being moved\
+            x=-1;\
+          \}\
+        \}\
+        d--;\
+        if(d < 0)\{\
+          x = -1;\
+        \}\
+      \}\
+      if(badQMove === true)\{\
+        console.log("Error Queens can not jump: " + move);\
+        setText("error_log", "Error: invalid move");\
+        canUpdate = false;\
+      \}\
+      else\{\
+        canUpdate = true;\
+      \}\
+    \}\
+    else if(typePiece === "k")\{ //KING** (finish)\
+      if((place[0]+1) <= 7 && updateBoard[place[0]+1][place[1]].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]+1][place[1]] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[0]-1) >= 0 && updateBoard[place[0]-1][place[1]].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]-1][place[1]] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[1]+1) <= 7 &&updateBoard[place[0]][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]][place[1]+1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[1]-1) >= 0 && updateBoard[place[0]][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]][place[1]-1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[0]+1) <= 7 && (place[1]+1) <= 7 && updateBoard[place[0]+1][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{ //other kind conditions\
+        updateBoard[place[0]+1][place[1]+1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[0]+1) <= 7 && (place[1]-1) >= 0 && updateBoard[place[0]+1][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]+1][place[1]-1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[0]-1) >= 0 && (place[1]+1) <= 7 && updateBoard[place[0]-1][place[1]+1].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]-1][place[1]+1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[0]-1) >= 0 && (place[1]-1) >= 0 && updateBoard[place[0]-1][place[1]-1].substring(0,2) === (colorPiece+typePiece))\{\
+        updateBoard[place[0]-1][place[1]-1] = "xx";\
+        updateBoard[place[0]][place[1]] = (colorPiece+typePiece);\
+        board = updateBoard;//write\
+        canUpdate = true;\
+      \}\
+      else if((place[1]+2) <= 7 && updateBoard[place[0]][place[1]+2].substring(0,2) === (colorPiece+typePiece))\{ //castling\
+       if((place[1]-2) >= 0 && updateBoard[place[0]][place[1]-2].substring(0,2) === (colorPiece+"r"))\{\
+         if(updateBoard[place[0]][place[1]+1].substring(0,2) === "xx" && updateBoard[place[0]][place[1]-1].substring(0,2) === "xx" && updateBoard[place[0]][place[1]].substring(0,2) === "xx")\{\
+           updateBoard[place[0]][place[1]-2] = "xx";\
+           updateBoard[place[0]][place[1]+1] = colorPiece + "r";\
+           updateBoard[place[0]][place[1]] = colorPiece + "k";\
+           updateBoard[place[0]][place[1]+2] = "xx";\
+           board = updateBoard;//write\
+           canUpdate = true;\
+         \}\
+       \}\
+      \}\
+      else if((place[1]-2) >= 0 && updateBoard[place[0]][place[1]-2].substring(0,2) === (colorPiece+typePiece))\{ //castling\
+       if((place[1]+1) <= 7 && updateBoard[place[0]][place[1]+1].substring(0,2) === (colorPiece+"r"))\{\
+         if(updateBoard[place[0]][place[1]-1].substring(0,2) === "xx" && updateBoard[place[0]][place[1]].substring(0,2) === "xx")\{\
+           updateBoard[place[0]][place[1]+1] = "xx";\
+           updateBoard[place[0]][place[1]-1] = colorPiece + "r";\
+           updateBoard[place[0]][place[1]] = colorPiece + "k";\
+           updateBoard[place[0]][place[1]-2] = "xx";\
+           board = updateBoard;//write\
+           canUpdate = true;\
+         \}\
+       \}\
+      \}\
+      else\{\
+        console.log("Error on input move: " + typePiece + " is not in range.");\
+        setText("error_log", "Error: outside of range");\
+        canUpdate = false;\
+      \}\
+    \}\
+    else\{\
+      console.log("Error in the type of move: " + move);\
+      setText("error_log", "Error: invalid move");\
+      canUpdate = false;\
+    \}\
+  \} //end of other else if\
+  else\{\
+    console.log("Error on input move: " + move + " is taken by another piece.");\
+    setText("error_log", "Error: invalid move");\
+    canUpdate = false;\
+  \}\
+  if(canUpdate === true)\{\
+    board = updateBoard;\
+  \}\
+\}\
+\
+function drawBackground()\{\
+  penColor("brown");\
+  penWidth(1000);\
+  penDown();\
+  moveForward(1);\
+  penUp();\
+\}\
+function outline(color, size) \{ //sides of the board\
+  penColor(color);\
+  penWidth(2);\
+  moveTo(startX-size, startY-size);\
+  penDown();\
+  for(var x1=4;x1>0;x1--)\{\
+    turnRight(90);\
+    moveForward(boardSize+size*2);\
+  \}\
+  penUp();\
+\}\
+function drawBoard()\{ //main board\
+  drawBackground();\
+  \
+  outline("white",3);\
+  outline(grey,5);\
+  outline("white",7);\
+  outline(grey,9);\
+  outline("black",11);\
+  \
+  penColor(grey);\
+  penWidth(2);\
+  moveTo(startX, startY);\
+  penDown();\
+  for(var x2=4;x2>0;x2--)\{\
+    turnRight(90);\
+    moveForward(boardSize);\
+  \}\
+  \
+  turnRight(180);\
+  drawLinesX(startX,startY);\
+  \
+  turnRight(90);\
+  drawLinesY(startX+boardSize,startY);\
+  turnRight(90);\
+  \
+  resetCursor();\
+  \
+  drawCheckers();\
+  \
+  resetCursor();\
+\}\
+function drawLinesX(x,y)\{\
+  for(var z=0; z<7; z++)\{\
+  x += tileSize;\
+  penUp();\
+  moveTo(x,y); //reset\
+  penDown();\
+  moveForward(boardSize);\
+  \}\
+\}\
+function drawLinesY(x,y)\{\
+  for(var z=0; z<7; z++)\{\
+  y += tileSize; //change\
+  penUp();\
+  moveTo(x,y); //reset\
+  penDown();\
+  moveForward(boardSize);\
+  \}\
+\}\
+function drawCheckers()\{ //makes checkered look but partially used as a tool to clear the pieces\
+  speed(100);\
+  var counter = -1;\
+  for(var y = 7; y >= 0; y--)\{\
+    for(var x = 7; x >= 0; x--)\{\
+      var adjust = (tileSize-2)/2;\
+      moveTo(posBoard[y][x][0]-adjust+1,posBoard[y][x][1]+adjust-5);\
+      if(counter === -1)\{\
+        drawSquare(blackColor);\
+      \}\
+      else\{\
+        drawSquare(whiteColor);\
+      \}\
+      counter = counter * -1;\
+    \}\
+    counter = counter * -1;\
+  \}\
+  speed(defaultSpd);\
+\}\
+\
+//functions for pieces (""||"x"=nothing, "p"=pawn,"n"=knight,"b"=bishop,"r"=rook,"q"=queen,"k"=king)...\
+function drawPawn()\{\
+  turnLeft(90);\
+  moveForward(1);\
+  turnRight(90);\
+  \
+  moveBackward(3);\
+  \
+  penWidth(2);\
+  penDown();\
+  \
+  moveBackward(3);\
+  moveForward(9);\
+  arcRight(180, 3);\
+  moveForward(1);\
+  arcRight(180, 3);\
+\
+  penUp();\
+  moveBackward(5); //reset pos\
+  turnLeft(90);\
+  moveForward(1);\
+  turnRight(90);\
+  \
+  turnRight(90);\
+  moveForward(1);\
+  turnLeft(90);\
+  \
+  moveForward(3);\
+\}\
+function drawRook()\{\
+  moveBackward(2.25);\
+  turnLeft(90);\
+  moveForward(2);\
+  turnRight(90);\
+  \
+  penWidth(2);\
+  penDown();\
+  moveForward(8.75);\
+  moveBackward(4.1);\
+  arcRight(180,3.25);\
+  \
+  penUp();\
+  turnRight(180);\
+\}\
+function drawKnight()\{\
+  moveBackward(1.5);\
+  turnLeft(90);\
+  moveForward(3);\
+  turnRight(90);\
+  \
+  penWidth(2);\
+  penDown();\
+  moveForward(7.75);\
+  moveBackward(4.25);\
+  arcRight(180,3.5);\
+  moveForward(3.74);\
+  \
+  penUp();\
+  turnRight(180);\
+\}\
+function drawBishop()\{\
+  turnLeft(90);\
+  moveForward(2);\
+  turnRight(90);\
+  \
+  penWidth(2);\
+  penDown();\
+  \
+  moveForward(1);\
+  arcRight(180, 3);\
+  moveForward(1);\
+  arcRight(180, 3);\
+  \
+  moveForward(10);\
+  // moveBackward(3);\
+  // arcRight(180, 3);\
+  // moveForward(1);\
+  // arcRight(180, 3);\
+  penUp();\
+  moveBackward(4);\
+\}\
+function drawQueen()\{\
+  turnRight(90);\
+  moveForward(1.5);\
+  turnLeft(90);\
+  \
+  moveBackward(2);\
+  \
+  penWidth(2);\
+  penDown();\
+  \
+  moveBackward(3);\
+  moveForward(9);\
+  arcLeft(180, 3);\
+  moveForward(1);\
+  arcLeft(180, 3);\
+\
+  penUp();\
+\}\
+function drawKing()\{   //fix for later*\
+  turnLeft(90);\
+  moveForward(1.75);\
+  turnRight(90);\
+  \
+  moveBackward(1.5);\
+  \
+  penWidth(2);\
+  penDown();\
+  \
+  moveBackward(2);\
+  moveForward(13);\
+  moveBackward(4);\
+  arcRight(180, 2.6);\
+  moveForward(1);\
+  arcRight(180, 2.6);\
+  moveBackward(3);\
+  turnRight(130);\
+  moveForward(8);\
+\
+  penUp();\
+  moveBackward(5); //reset pos\
+  turnLeft(130);\
+\}\
+\
+\
+//more helpers\
+function convertLetNum(letter)\{\
+  var number = 0;\
+  if(letter === "a")\{\
+    number = 1;\
+  \}\
+  else if(letter === "b")\{\
+    number = 2;\
+  \}\
+  else if(letter === "c")\{\
+    number = 3;\
+  \}\
+  else if(letter === "d")\{\
+    number = 4;\
+  \}\
+  else if(letter === "e")\{\
+    number = 5;\
+  \}\
+  else if(letter === "f")\{\
+    number = 6;\
+  \}\
+  else if(letter === "g")\{\
+    number = 7;\
+  \}\
+  else if(letter === "h")\{\
+    number = 8;\
+  \}\
+  else\{\
+    console.log("Error on letter input: " + letter);\
+    setText("error_log", "Error: range not on board");\
+    canUpdate = false;\
+  \}\
+  return number;\
+\}\
+function convertNum(num)\{\
+  var number = 0;\
+  if(num === "1")\{\
+    number = 1;\
+  \}\
+  else if(num === "2")\{\
+    number = 2;\
+  \}\
+  else if(num === "3")\{\
+    number = 3;\
+  \}\
+  else if(num === "4")\{\
+    number = 4;\
+  \}\
+  else if(num === "5")\{\
+    number = 5;\
+  \}\
+  else if(num === "6")\{\
+    number = 6;\
+  \}\
+  else if(num === "7")\{\
+    number = 7;\
+  \}\
+  else if(num === "8")\{\
+    number = 8;\
+  \}\
+  else if(num === "9")\{\
+    number = 9;\
+  \}\
+  else \{\
+    console.log("Number Conversion Error: " + num);\
+    setText("error_log", "Error: range not on board");\
+    canUpdate = false;\
+  \}\
+  return number;\
+\}\
+function checkColor(color)\{\
+  if(color === "b")\{\
+    penColor("black");\
+  \}\
+  else if(color === "w")\{\
+    penColor("white");\
+  \}\
+  else if(color == "x")\{\
+    //no piece (color)\
+  \}\
+  else\{\
+    console.log("Error on color: " + color);\
+  \}\
+\}\
+function drawPieces()\{ //helper\
+  //black\
+  moveTo(posBoard[1][0][0],posBoard[1][0][1]); //pawns\
+  for(var x1 = numSquares; x1 >0; x1--)\{\
+    penColor("black");\
+    drawPawn();\
+    if(x1 == 1) \{\}\
+    else\{\
+      moveOverSquare(1);\
+    \}\
+  \}\
+  moveTo(posBoard[0][2][0], posBoard[0][2][1]); //bishops\
+  drawBishop();\
+  moveTo(posBoard[0][5][0], posBoard[0][5][1]);\
+  drawBishop();\
+  \
+  //white\
+  moveTo(posBoard[6][0][0],posBoard[6][0][1]); //pawns\
+  for(var x2 = numSquares; x2 >0; x2--)\{\
+    penColor("white");\
+    drawPawn();\
+    if(x2 == 1) \{\}\
+    else\{\
+      moveOverSquare(1);\
+    \}\
+  \}\
+  moveTo(posBoard[7][2][0], posBoard[7][2][1]); //bishops\
+  drawBishop();\
+  moveTo(posBoard[7][5][0], posBoard[7][5][1]);\
+  drawBishop();\
+  //reset\
+  resetCursor();\
+\}\
+function drawSquare(color)\{\
+  penColor(color);\
+  for(var x = tileSize-4; x > 0; x--)\{\
+    x--;\
+    penDown();\
+    moveForward(x);\
+    turnRight(90);\
+    moveForward(x);\
+    turnRight(90);\
+    moveForward(x);\
+    turnRight(90);\
+    moveForward(x);\
+    penUp();\
+    moveBackward(1);\
+    turnRight(90);\
+    moveForward(1);\
+  \}\
+  penUp();\
+\}\
+\
+\
+//other movement\
+function resetCursor()\{\
+  penUp();\
+  penColor("black");\
+  speed(defaultSpd);\
+  moveTo( posBoard[7][3][0]+(tileSize/2), posBoard[7][3][1]+(tileSize*1.5) );\
+\}\
+function moveOverSquare(num)\{\
+  penUp();\
+  for(var x = num; x >= 0; x--)\{\
+    turnRight(90);\
+    moveForward(18);\
+    turnLeft(90);\
+  \}\
+\}\
+function moveCheck()\{ //just to make sure the posboard is correct and the letters always in sync\
+  for(var y = 7; y >= 0; y--)\{\
+    for(var x = 7; x >= 0; x--)\{\
+      penColor(grey);\
+      moveTo(posBoard[y][x][0], posBoard[y][x][1]);\
+      penDown();\
+      moveForward(2);\
+      moveBackward(2);\
+      penUp();\
+    \}\
+  \}\
+\}\
+\
+//start of RUNNING code **** (Oval?)\
+var whiteToMove = true;\
+onEvent("gameButton", "click", function( ) \{\
+ setScreen("mainScreen");\
+  whiteToMove = true;\
+  console.log( "game starting ...");\
+  \
+  speed(defaultSpd);\
+  penUp();\
+  drawBoard();\
+  updateBoard();\
+  // drawPieces();\
+  resetCursor();\
+\});\
+\
+onEvent("instructButton", "click", function( ) \{\
+ setScreen("instructions");\
+\});\
+onEvent("backButton", "click", function( ) \{\
+ setScreen("homeScreen");\
+\});\
+onEvent("bth", "click", function( ) \{\
+ setScreen("homeScreen");\
+\});\
+onEvent("resetBut", "click", function( ) \{\
+ whiteToMove = true;\
+ console.log( "game restarting...");\
+ board = defaultBoard;\
+  speed(defaultSpd);\
+  penUp();\
+  updateBoard();\
+  resetCursor();\
+\});\
+\
+// var whiteWin = false;\
+// var blackWin = true;\
+// var canUpdate = false;\
+var piece = "w"; // white vs. black\
+onEvent("move", "change", function(event) \{\
+    var userMove = piece + getText("move");\
+    console.log("Move: " + userMove);\
+    \
+    // var canUpdate = false;\
+    makeMove(userMove);\
+    // console.log(canUpdate);\
+    if(canUpdate === true)\{\
+      updateBoard();\
+      resetCursor();\
+      setText("error_log", "Error Log...");\
+      \
+      if(whiteToMove)\{\
+        setProperty("moveBox", "text-color", "black");\
+        whiteToMove = false;\
+        // setProperty("moveBox", "background-color", blackColor); // black\
+        setText("moveBox", "Black To Move");\
+        piece = "b";\
+      \}\
+      else\{\
+        setProperty("moveBox", "text-color", "white");\
+        whiteToMove = true;\
+        // setProperty("moveBox", "background-color", whiteColor); // white\
+        setText("moveBox", "White To Move");\
+        piece = "w";\
+      \}\
+      // //check win and output to moveBox --> too slow\
+      // var whiteOutCount = 0;\
+      // var blackOutCount = 0;\
+      // for(var f = 0; f <= 7; f++)\{\
+      //   for(var g = 0; g<= 7; g++)\{\
+      //     if(board[f][g].substring(0,2) != "wk")\{\
+      //       whiteOutCount++;\
+      //     \}\
+      //     if(board[f][g].substring(0,2) != "bk")\{\
+      //       blackOutCount++;\
+      //     \}\
+      //   \}\
+      // \}\
+      // if(whiteOutCount >= 64)\{\
+      //   setProperty("moveBox", "text-color", "black");\
+      //   setText("moveBox", "Black Wins!");\
+      // \}\
+      // else if(blackOutCount >= 64)\{\
+      //   setProperty("moveBox", "text-color", "white");\
+      //   setText("moveBox", "White Wins!");\
+      // \}\
+    \}\
+    else\{\
+      console.log("make another move...");\
+    \}\
+    setText("move", "");\
+\});\
+onEvent("submitMove", "click", function(event) \{\
+    var userMove = piece + getText("move");\
+    console.log("Move: " + userMove);\
+    \
+    // var canUpdate = false;\
+    makeMove(userMove);\
+    // console.log(canUpdate);\
+    if(canUpdate === true)\{\
+      updateBoard();\
+      resetCursor();\
+      setText("error_log", "Error Log...");\
+      \
+      if(whiteToMove)\{\
+        setProperty("moveBox", "text-color", "black");\
+        whiteToMove = false;\
+        // setProperty("moveBox", "background-color", blackColor); // black\
+        setText("moveBox", "Black To Move");\
+        piece = "b";\
+      \}\
+      else\{\
+        setProperty("moveBox", "text-color", "white");\
+        whiteToMove = true;\
+        // setProperty("moveBox", "background-color", whiteColor); // white\
+        setText("moveBox", "White To Move");\
+        piece = "w";\
+      \}\
+    \}\
+    else\{\
+      console.log("make another move...");\
+    \}\
+    setText("move", "");\
+\});\
+// moveCheck();\
+}
